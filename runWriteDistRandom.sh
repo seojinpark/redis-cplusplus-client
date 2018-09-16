@@ -10,17 +10,17 @@ SIZES=$(seq 2 -1 0)
 
 OUTPUTPREFIX=$1"-batch"
 
-mkdir /shome/resultRedis
+#mkdir /shome/resultRedis
 
 for SIZE in $SIZES; do
 #  for CLISIZE in $(seq $SIZE -4 3); do
 #    ((CLISIZE = 20))
-    echo "witness: $SIZE outputFile: /shome/resultRedis/writeDistRandome-witness$SIZE.raw"
+    echo "witness: $SIZE outputFile: /shome/resultRedis/writeDistRandom-witness$SIZE.raw"
 
     for ITER in $(seq $REP -1 1); do
 #        LOGFILE="$(date +%Y%m%d%H%M%S)_writeDistRandom.raw"
 #        ./redis_benchmark writeDistRandom --count 1000000 --witness $SIZE > /tmp/$LOGFILE
-        ./redis_benchmark writeDistRandom --count 1000000 --witness $SIZE > /shome/resultRedis/writeDistRandome-witness$SIZE.raw
+        ./redis_benchmark writeDistRandom --count 1000000 --witness $SIZE > /shome/resultRedis/writeDistRandom-witness$SIZE.raw
     done
     sleep 4
 #  done

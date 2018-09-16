@@ -1081,7 +1081,8 @@ namespace redis {
             int index = 0;
             for (int socket : con.witnessSockets) {
                 fastcmd cmd(7, "wrecord");
-                cmd << con.witnessBufferIndex[index] << hashIndex << (uint64_t)keyHash
+                cmd << (uint64_t)con.witnessBufferIndex[index]
+                        << (uint64_t)hashIndex << (uint64_t)keyHash
                         << clientId << lastRequestId;
                 cmd.append(request.data(), request.size());
                 TimeTrace::record("Constructed witness record request string.");
@@ -1142,18 +1143,22 @@ namespace redis {
                     TimeTrace::record("found socket.");
                     send_(socket, request.data(), request.size());
                     TimeTrace::record("Sent to master.");
-                    sendWitnessRecord(key, request);
 
                     bool shouldSync = false;
-                    if (!receiveWitnessReplay(key)) {
-                        shouldSync = true;
+                    // Temporary hack to remove overhead of CGAR-W from CGAR-C benchmark.
+                    if (connections_[0].witnessIps.size() > 0) { // If using witness..
+                        sendWitnessRecord(key, request);
                     }
-                    TimeTrace::record("Received reply from all witness.");
 
-                    uint64_t opNumInServer, syncNum;
-                    if (recv_unsynced_ok_reply_(socket, &opNumInServer, &syncNum)) {
-                        tracker.registerUnsynced(socket, get_conn(key).dbindex, request.data(), request.size(), opNumInServer, syncNum);
-                        TimeTrace::record("Registered unsynced.");
+//Disable CGAR-C                    uint64_t opNumInServer, syncNum;
+                    if (recv_single_line_reply_(socket) == REDIS_STATUS_REPLY_OK) {
+//Disable CGAR-C                    if (recv_unsynced_ok_reply_(socket, &opNumInServer, &syncNum)) {
+//Disable CGAR-C                        tracker.registerUnsynced(socket, get_conn(key).dbindex, request.data(), request.size(), opNumInServer, syncNum);
+//                        TimeTrace::record("Registered unsynced.");
+                        if (!receiveWitnessReplay(key)) {
+                            shouldSync = true;
+                        }
+                        TimeTrace::record("Received reply from all witness.");
                         if (shouldSync) {
                             // TODO: send sync rpc?? well...
 //                            get(key); // hack to avoid implementing new rpc..
@@ -2554,15 +2559,25 @@ namespace redis {
 //                throw protocol_error("argument is out of uint64_t range");
 //                errno = 0;
 //            }
+            TimeTrace::record("Starting parsing two longs.");
 
             char str[40];
             strncpy(str, reply.c_str() + 3, 40);
+            uint strmax = strlen(str);
 
-            char *token = std::strtok(str, " ");
+            char *token = str;
+            char *token2 = NULL;
+            for (uint i = 0; i < strmax; ++i) {
+                if (str[i] == ' ') {
+                    str[i] = '\0';
+                    token2 = str + i + 1;
+                }
+            }
+
+//            TimeTrace::record("Starting two bas64int2ull calls.");
+
             base64int2ull(token, 100, opNum);
-
-            token = std::strtok(NULL, " ");
-            base64int2ull(token, 100, synced);
+            base64int2ull(token2, 100, synced);
 
             TimeTrace::record("Parsed reply from master.");
             return true;

@@ -41,10 +41,10 @@
 using RAMCloud::Cycles;
 
 // Globals.
-//const char* hostIp = "192.168.1.102";
-const char* hostIp = "rcmaster";
-//const char* witnessIps[] = {"192.168.1.104", "192.168.1.105"};
-const char* witnessIps[] = {"rc01", "rc02"};
+const char* hostIp = "10.10.101.101";
+//const char* hostIp = "rcmaster";
+const char* witnessIps[] = {"10.10.102.101", "10.10.103.101", "10.10.104.101"};
+//const char* witnessIps[] = {"rc01", "rc02"};
 //const char* witnessIps[] = {"192.168.1.166", "192.168.1.167"};
 int objectSize = 100;   // Number of bytes for value payload.
 int count = 1000000;    // How many repeat

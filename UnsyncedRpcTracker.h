@@ -20,6 +20,7 @@
 #include <mutex>
 #include <queue>
 #include <unordered_map>
+#include <functional>
 
 namespace RAMCloud {
 

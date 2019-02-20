@@ -161,8 +161,6 @@ writeThroughputRunner(int tid) {
         gcReqIds.push_back(clientPtr->lastRequestId);
         if (writeCount % 1000 == 0) {
             writeThroughputTotalWrites.add(1000);
-        }
-        if (writeCount % 50 == 0) {
             for (uint32_t ridx = 0; ridx < gcKeys.size(); ridx++) {
                 clientPtr->witnessgc(gcKeys.at(ridx), gcReqIds.at(ridx));
             }

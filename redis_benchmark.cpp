@@ -46,7 +46,7 @@ const char* witnessIps[] = {"10.10.102.101", "10.10.103.101", "10.10.104.101"};
 int objectSize = 100;   // Number of bytes for value payload.
 int count = 1000000;    // How many repeat
 int clientIndex = 0;    // ClientIndex as in RAMCloud clusterPerf.
-int threads = 1;        // How many client threads per machine to run benchmark.
+int threads = 50;        // How many client threads per machine to run benchmark.
                         // used for throughput benchmark only.
 int numWitness = 3;// send requests to witness as well as master.
 

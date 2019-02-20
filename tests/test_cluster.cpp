@@ -4,7 +4,7 @@
 
 void test_cluster_dbsize(redis::client & c)
 {
-  redis::client::int_type count;
+  redis::client::int_type count = 0;
   for(size_t i=0; i < c.connections().size(); i++)
   {
     redis::client::int_type curSize = c.dbsize( c.connections()[i] );

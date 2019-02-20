@@ -780,11 +780,53 @@ namespace redis {
         void set(const string_type & key,
                 const string_type & value) {
             TimeTrace::record("Staring set operation.");
-//            makecmd request("SET");
-//            request << key << value << std::to_string(clientId) << std::to_string(++lastRequestId);
+//          makecmd request("SET");
+//          request << key << value << std::to_string(clientId) << std::to_string(++lastRequestId);
             fastcmd request(5, "SET");
             request << key << value << clientId << ++lastRequestId;
             sendRecvOk(key, request);
+        }
+
+        // Only use for single witness benchmarking.
+        void witnessset(const string_type & key,
+                        const string_type & value) {
+            TimeTrace::record("Staring witnessset operation.");
+            uint32_t keyHash;
+            MurmurHash3_x86_32(key.data(), key.size(), connections_[0].dbindex, &keyHash);
+            int hashIndex = keyHash & 1023;
+            int socket = connections_[0].socket;
+            fastcmd request(5, "SET");
+            request << key << value << clientId << ++lastRequestId;
+
+            fastcmd cmd(7, "wrecord");
+            // MasterIdx is always 1.
+            cmd << (uint64_t) 1
+                << (uint64_t)hashIndex << (uint64_t)keyHash
+                << clientId << lastRequestId;
+            cmd.append(request.data(), request.size());
+            send_(socket, cmd.data(), cmd.size());
+            // Some can return false here.
+            recv_witness_reply_(socket);
+            TimeTrace::record("Sent to witness");
+        }
+
+        // Only use for single witness benchmarking.
+        void witnessgc(const string_type & key,
+                        const uint64_t requestId) {
+            TimeTrace::record("Staring witnessgc operation.");
+            uint32_t keyHash;
+            MurmurHash3_x86_32(key.data(), key.size(), connections_[0].dbindex, &keyHash);
+            int hashIndex = keyHash & 1023;
+            int socket = connections_[0].socket;
+
+            fastcmd cmd(5, "WGC");
+            cmd << "1" << (uint64_t)hashIndex << clientId << requestId;
+            send_(socket, cmd.data(), cmd.size());
+            string_vector unsyncedRPCCounts;
+            recv_multi_bulk_reply_(socket, unsyncedRPCCounts); 
+
+            //recv_ok_reply_(socket);
+            TimeTrace::record("Sent gc to witness");
         }
 
         void mset(const string_vector & keys, const string_vector & values) {
@@ -1155,7 +1197,7 @@ namespace redis {
 //Disable CGAR-C                    if (recv_unsynced_ok_reply_(socket, &opNumInServer, &syncNum)) {
 //Disable CGAR-C                        tracker.registerUnsynced(socket, get_conn(key).dbindex, request.data(), request.size(), opNumInServer, syncNum);
 //                        TimeTrace::record("Registered unsynced.");
-                        if (!receiveWitnessReplay(key)) {
+                        if (connections_[0].witnessIps.size() > 0 && !receiveWitnessReplay(key)) {
                             shouldSync = true;
                         }
                         TimeTrace::record("Received reply from all witness.");
@@ -1197,7 +1239,7 @@ namespace redis {
                     send_(socket, request.data(), request.size());
                     sendWitnessRecord(key, request);
                     bool shouldSync = false;
-                    if (!receiveWitnessReplay(key)) {
+                    if (connections_[0].witnessIps.size() > 0 && !receiveWitnessReplay(key)) {
                         shouldSync = true;
                     }
                     int64_t value;

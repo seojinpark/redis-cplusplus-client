@@ -2,7 +2,7 @@
 
 VPATH = tests
 
-CFLAGS?= -std=c++11 -pedantic -O3 -Wall -DNEBUG -W
+CFLAGS?= -std=c++11 -pedantic -O3 -Wall -DNEBUG -W -Wno-unused-parameter 
 #CFLAGS?= -std=c++11 -pedantic -O3 -W -DDEBUG -g
 CC = g++
 
@@ -16,10 +16,12 @@ TESTAPPLIBS = $(LIBNAME) -lstdc++ -lboost_system -lboost_thread -lpthread
 
 
 TESTAPP_SINGLE = redis_single_witness_benchmark
-TESTAPPOBJS_SINGLE = Cycles.o redis_single_witness_benchmark.o UnsyncedRpcTracker.o MurmurHash3.o TimeTrace.o test_lists.o test_sets.o test_zsets.o test_hashes.o test_cluster.o test_distributed_strings.o test_distributed_ints.o test_distributed_mutexes.o test_generic.o benchmark.o functions.o
+TESTAPPOBJS_SINGLE = Cycles.o redis_single_witness_benchmark.o UnsyncedRpcTracker.o MurmurHash3.o TimeTrace.o benchmark.o functions.o
 TESTAPPLIBS_SINGLE = $(LIBNAME) -lstdc++ -lboost_system -lboost_thread -lpthread
 
 all: $(LIBNAME) $(TESTAPP) $(TESTAPP_SINGLE)
+
+single: $(LIBNAME) $(TESTAPP_SINGLE)
 
 $(LIBNAME): $(CLIENTOBJS)
 	ar rcs $(LIBNAME) $(CLIENTOBJS)

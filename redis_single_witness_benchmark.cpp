@@ -149,13 +149,25 @@ writeThroughputRunner(int tid) {
 
 //    printf("New thread created! tid: %d clienId Assigned: %" PRIu64 ", rpcId: %" PRIu64 "\n", tid, multiClient[tid]->clientId, multiClient[tid]->lastRequestId);
     uint64_t writeCount = 0;
+    std::vector<std::string> gcKeys;
+    std::vector<uint64_t> gcReqIds;
     while(true) {
         makeKey(static_cast<int>(generateRandom() % numKeys), keyLength, key);
         genRandomString(value, objectSize);
-        clientPtr->set(std::string(key, keyLength), std::string(value, objectSize));
+        std::string keyStr = std::string(key, keyLength);
+        clientPtr->witnessset(keyStr, std::string(value, objectSize));
         writeCount++;
+        gcKeys.push_back(keyStr);
+        gcReqIds.push_back(clientPtr->lastRequestId);
         if (writeCount % 1000 == 0) {
             writeThroughputTotalWrites.add(1000);
+        }
+        if (writeCount % 50 == 0) {
+            for (uint32_t ridx = 0; ridx < gcKeys.size(); ridx++) {
+                clientPtr->witnessgc(gcKeys.at(ridx), gcReqIds.at(ridx));
+            }
+            gcKeys.clear();
+            gcReqIds.clear();
         }
     }
 }

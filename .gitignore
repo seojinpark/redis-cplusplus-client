@@ -1,3 +1,4 @@
 *.o
 *.a
 redis_benchmark
+redis_single_witness_benchmark

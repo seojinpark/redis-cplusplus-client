@@ -14,7 +14,12 @@ TESTAPP = redis_benchmark
 TESTAPPOBJS = Cycles.o redis_benchmark.o UnsyncedRpcTracker.o MurmurHash3.o TimeTrace.o test_lists.o test_sets.o test_zsets.o test_hashes.o test_cluster.o test_distributed_strings.o test_distributed_ints.o test_distributed_mutexes.o test_generic.o benchmark.o functions.o
 TESTAPPLIBS = $(LIBNAME) -lstdc++ -lboost_system -lboost_thread -lpthread
 
-all: $(LIBNAME) $(TESTAPP)
+
+TESTAPP_SINGLE = redis_single_witness_benchmark
+TESTAPPOBJS_SINGLE = Cycles.o redis_single_witness_benchmark.o UnsyncedRpcTracker.o MurmurHash3.o TimeTrace.o test_lists.o test_sets.o test_zsets.o test_hashes.o test_cluster.o test_distributed_strings.o test_distributed_ints.o test_distributed_mutexes.o test_generic.o benchmark.o functions.o
+TESTAPPLIBS_SINGLE = $(LIBNAME) -lstdc++ -lboost_system -lboost_thread -lpthread
+
+all: $(LIBNAME) $(TESTAPP) $(TESTAPP_SINGLE)
 
 $(LIBNAME): $(CLIENTOBJS)
 	ar rcs $(LIBNAME) $(CLIENTOBJS)
@@ -31,6 +36,9 @@ $(LIBNAME): $(CLIENTOBJS)
 $(TESTAPP): $(LIBNAME) $(TESTAPPOBJS)
 	$(CC) -o $(TESTAPP) $(TESTAPPOBJS) $(TESTAPPLIBS)
 
+$(TESTAPP_SINGLE): $(LIBNAME) $(TESTAPPOBJS_SINGLE)
+	$(CC) -o $(TESTAPP_SINGLE) $(TESTAPPOBJS_SINGLE) $(TESTAPPLIBS_SINGLE)
+
 test: $(TESTAPP)
 	@./test_client
 
@@ -40,7 +48,7 @@ Perf: Perf.cc Cycles.o
 check: test
 
 clean:
-	rm -rf $(LIBNAME) *.o $(TESTAPP)
+	rm -rf $(LIBNAME) *.o $(TESTAPP) $(TESTAPP_SINGLE)
 
 dep:
 	$(CC) -MM *.c *.cpp
@@ -50,6 +58,7 @@ log:
 
 anet.o:                     anet.c fmacros.h anet.h
 redis_benchmark.o:	    redisclient.h redis_benchmark.cpp Cycles.h UnsyncedRpcTracker.h MurmurHash3.h
+redis_single_witness_benchmark.o:	    redisclient.h redis_single_witness_benchmark.cpp Cycles.h UnsyncedRpcTracker.h MurmurHash3.h
 TimeTrace.o:		    TimeTrace.h Atomic.h
 Cycles.o:		    Cycles.h
 MurmurHash3.o:		    MurmurHash3.h

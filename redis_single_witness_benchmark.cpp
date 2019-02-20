@@ -41,14 +41,13 @@
 using RAMCloud::Cycles;
 
 // Globals.
-const char* hostIp = "10.10.101.101";
-const char* witnessIps[] = {"10.10.102.101", "10.10.103.101", "10.10.104.101"};
+const char* hostIp = "10.10.102.101";
 int objectSize = 100;   // Number of bytes for value payload.
 int count = 1000000;    // How many repeat
 int clientIndex = 0;    // ClientIndex as in RAMCloud clusterPerf.
-int threads = 1;        // How many client threads per machine to run benchmark.
+int threads = 50;        // How many client threads per machine to run benchmark.
                         // used for throughput benchmark only.
-int numWitness = 3;// send requests to witness as well as master.
+int numWitness = 0;// send requests to witness as well as master.
 
 redis::client* client;
 //redis::client* multiClient[1000];
@@ -145,13 +144,6 @@ writeThroughputRunner(int tid) {
     if (tid != 0) {
         std::vector<std::string> witnessIpsVec;
         std::vector<int> witnessMasterIdx;
-        if (numWitness) {
-            for (int i = 0; i < numWitness; ++i) {
-                const char* witnessIp = witnessIps[i];
-                witnessIpsVec.push_back(std::string(witnessIp, strlen(witnessIp)));
-                witnessMasterIdx.push_back(1);
-            }
-        }
         clientPtr = new redis::client(hostIp, witnessIpsVec, witnessMasterIdx);
     }
 
@@ -219,11 +211,10 @@ writeDistRandom()
     char* value = new char[objectSize + 1];
 
     // fill table first.
-//    for (int i = 0; i < numKeys; ++i) {
+    //    for (int i = 0; i < numKeys; ++i) {
     for (int i = 0; i < 10000; ++i) {
         makeKey(static_cast<int>(i), keyLength, key);
         genRandomString(value, objectSize);
-
         client->set(std::string(key, keyLength), std::string(value, objectSize));
         // TODO: use pipelining.
     }
@@ -547,13 +538,6 @@ main(int argc, char *argv[]) {
 
     std::vector<std::string> witnessIpsVec;
     std::vector<int> witnessMasterIdx;
-    if (numWitness) {
-        for (int i = 0; i < numWitness; ++i) {
-            const char* witnessIp = witnessIps[i];
-            witnessIpsVec.push_back(std::string(witnessIp, strlen(witnessIp)));
-            witnessMasterIdx.push_back(1);
-        }
-    }
     redis::client realClient(hostIp, witnessIpsVec, witnessMasterIdx);
     client = &realClient;
 //    for (int tid = 0; tid < threads; tid++) {
